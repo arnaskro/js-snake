@@ -4,10 +4,10 @@ $(function() {
 
     const STATES = { ACTIVE: 1, PAUSED: 0, LOSSER: 2, WINNER: 3 };
     const DIRECTIONS = { UP: 0, DOWN: 1, LEFT: 2, RIGHT: 3 };
-    const APPLE_SCORE = 50;
+    const SCORE_POINTS = 50;
 
-    var GRID_SIZE = 18;
-    var GAME_SPEED = 125;
+    var GRID_SIZE = 4;
+    var GAME_SPEED = 600;
 
     var STATE = STATES.PAUSED;
     var DIRECTION = DIRECTIONS.UP;
@@ -19,8 +19,6 @@ $(function() {
     var SCORE = 0;
 
     var MOVE_HISTORY = [];
-
-    var MADE_MOVE = false;
 
     $.app = {
         elements: {
@@ -49,9 +47,7 @@ $(function() {
 
                 doc.on('keydown', function(e) {
 
-                    if (STATE == STATES.ACTIVE && !MADE_MOVE) {
-                        MADE_MOVE = true;
-
+                    if (STATE == STATES.ACTIVE) {
                         switch (e.which) {
                             case 37: case 65:
                                 DIRECTION = DIRECTIONS.LEFT; break;
@@ -67,6 +63,10 @@ $(function() {
                     }
 
                 })
+
+                $(window).on('resize', function() {
+                    $.app.setGridSize();
+                })
             }
         },
         scenes: {
@@ -78,10 +78,10 @@ $(function() {
                 $.app.resetVars();
                 $.app.drawArena();
 
-
                 $.app.addApple();
 
                 var generatedInitialPosition = $.app.generatePosition();
+                
                 MOVE_HISTORY.push(generatedInitialPosition);
                 $.app.setHead(generatedInitialPosition.x, generatedInitialPosition.y);
 
@@ -97,6 +97,7 @@ $(function() {
             winner: function() {
                 base.html('');
                 base.append($.app.elements.heading("CONGRATULATIONS! YOU WON!"));
+                base.append($.app.elements.score("Your score: " + SCORE));
                 base.append($.app.elements.startButton);
             }
         },
@@ -125,6 +126,15 @@ $(function() {
             var gridsSetting = 'repeat('+GRID_SIZE+', calc(100% / '+GRID_SIZE+'))';
             $('.arena').css('grid-template-columns', gridsSetting);
             $('.arena').css('grid-template-rows', gridsSetting);
+
+            var heightAndWidth = 'calc(100vh - 160px - 6rem)';
+
+            if ($(window).width() < ($(window).height() - 160)) {
+                heightAndWidth = 'calc(100vw - 3rem)';
+            }
+
+            $('.arena').css('height', heightAndWidth);
+            $('.arena').css('width', heightAndWidth);
         },
         generatePosition: function() {
             var result = { 
@@ -149,19 +159,21 @@ $(function() {
         setHead: function(x, y) {
             CURR = { x: x, y: y};
 
+            if ($.app.checkIfCollides(CURR)) { STATE = STATES.LOSSER; return; }
+
             if (x == APPLE.x && y == APPLE.y) $.app.eatApple();
+            else MOVE_HISTORY.shift();
 
             var previousHead = $('.pane.head');
             if (previousHead.length) previousHead.removeClass('head');
 
             $('#pane-'+x+'-'+y).addClass('head');
 
-            MOVE_HISTORY.push({ x: CURR.x, y: CURR.y });
+            MOVE_HISTORY.push(CURR);
 
             $.app.drawBody();
         },
         drawBody: function() {
-            MOVE_HISTORY.shift();
 
             $('.pane.body').removeClass('body');
 
@@ -174,9 +186,7 @@ $(function() {
             }
         },
         eatApple: function() {
-            console.log("eating")
-            SCORE += APPLE_SCORE;
-            MOVE_HISTORY.push({ x: CURR.x, y: CURR.y });
+            SCORE += SCORE_POINTS;
 
             $('.pane.has-apple').html('');
             $('.pane.has-apple').removeClass('has-apple');
@@ -184,7 +194,7 @@ $(function() {
             if (!$.app.checkIfWon()) $.app.addApple();
         },
         checkIfWon: function() {
-            if (MOVE_HISTORY.length == GRID_SIZE*GRID_SIZE) {
+            if (MOVE_HISTORY.length >= (GRID_SIZE*GRID_SIZE - 1))  {
                 STATE = STATES.WINNER;
                 return true;
             }
