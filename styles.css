@@ -4,7 +4,7 @@
     overflow: hidden;
     display: grid;
     margin: 0 auto;
-    border: 1px solid black;
+    border: 1px dashed black;
     position: relative;
 }
 

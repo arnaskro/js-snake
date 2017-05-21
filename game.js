@@ -2,7 +2,7 @@ $(function() {
     var base = $('#app');
     var doc = $(document);
 
-    const STATES = { ACTIVE: 1, PAUSED: 0, LOSSER: 2 };
+    const STATES = { ACTIVE: 1, PAUSED: 0, LOSSER: 2, WINNER: 3 };
     const DIRECTIONS = { UP: 0, DOWN: 1, LEFT: 2, RIGHT: 3 };
     const APPLE_SCORE = 50;
 
@@ -49,7 +49,7 @@ $(function() {
 
                 doc.on('keydown', function(e) {
 
-                    if (!MADE_MOVE) {
+                    if (STATE == STATES.ACTIVE && !MADE_MOVE) {
                         MADE_MOVE = true;
 
                         switch (e.which) {
@@ -62,8 +62,10 @@ $(function() {
                             case 40: case 83:
                                 DIRECTION = DIRECTIONS.DOWN; break;
                         }
-
+                    } else if (e.which == 13 && (STATE == STATES.LOSSER || STATE == STATES.PAUSED)) {
+                        $("#startButton").trigger('click');
                     }
+
                 })
             }
         },
@@ -80,6 +82,7 @@ $(function() {
                 $.app.addApple();
 
                 var generatedInitialPosition = $.app.generatePosition();
+                MOVE_HISTORY.push(generatedInitialPosition);
                 $.app.setHead(generatedInitialPosition.x, generatedInitialPosition.y);
 
                 STATE = STATES.ACTIVE;
@@ -90,11 +93,17 @@ $(function() {
                 base.append($.app.elements.heading("YOU LOST!"));
                 base.append($.app.elements.score("Your score: " + SCORE));
                 base.append($.app.elements.startButton);
+            },
+            winner: function() {
+                base.html('');
+                base.append($.app.elements.heading("CONGRATULATIONS! YOU WON!"));
+                base.append($.app.elements.startButton);
             }
         },
         resetVars: function() {
             SCORE = 0;
             DIRECTION = DIRECTIONS.UP;
+            MOVE_HISTORY = [];
         },
         resetBaseStyles: function() {
             base.attr("class", "is-fullwidth has-text-centered");
@@ -123,7 +132,13 @@ $(function() {
                 y: Math.floor(Math.random() * GRID_SIZE) + 1
             };
 
-            return (result == CURR || result == APPLE) ? $.app.generatePosition() : result;
+            return (result == CURR || result == APPLE || $.app.checkIfCollides(result)) ? $.app.generatePosition() : result;
+        },
+        checkIfCollides: function(pos) {
+            for (var i = 0; i < MOVE_HISTORY.length; i++)
+                if (MOVE_HISTORY[i].x == pos.x && MOVE_HISTORY[i].y == pos.y) return true;
+
+            return false;
         },
         addApple: function() {
             APPLE = $.app.generatePosition();
@@ -134,16 +149,20 @@ $(function() {
         setHead: function(x, y) {
             CURR = { x: x, y: y};
 
-            if (CURR == APPLE) $.app.eatApple();
+            if (x == APPLE.x && y == APPLE.y) $.app.eatApple();
 
             var previousHead = $('.pane.head');
             if (previousHead.length) previousHead.removeClass('head');
 
             $('#pane-'+x+'-'+y).addClass('head');
 
+            MOVE_HISTORY.push({ x: CURR.x, y: CURR.y });
+
             $.app.drawBody();
         },
         drawBody: function() {
+            MOVE_HISTORY.shift();
+
             $('.pane.body').removeClass('body');
 
             var temp = {};
@@ -157,12 +176,20 @@ $(function() {
         eatApple: function() {
             console.log("eating")
             SCORE += APPLE_SCORE;
-            HISTORY.push({ x: CURR.x, y: CURR.y });
+            MOVE_HISTORY.push({ x: CURR.x, y: CURR.y });
 
             $('.pane.has-apple').html('');
             $('.pane.has-apple').removeClass('has-apple');
 
-            $.app.addApple();
+            if (!$.app.checkIfWon()) $.app.addApple();
+        },
+        checkIfWon: function() {
+            if (MOVE_HISTORY.length == GRID_SIZE*GRID_SIZE) {
+                STATE = STATES.WINNER;
+                return true;
+            }
+
+            return false;
         },
         loop: function () {
             if (STATE === STATES.ACTIVE) {
@@ -186,6 +213,8 @@ $(function() {
                 
             } else if (STATE === STATES.LOSSER) {
                 $.app.scenes.losser();
+            } else if (STATE === STATES.WINNER) {
+                $.app.scenes.winner();
             }
         },
         check: function() {
