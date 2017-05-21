@@ -1,0 +1,36 @@
+.arena {
+    width: calc(100vh - 160px - 6rem);
+    height: calc(100vh - 160px - 6rem);
+    overflow: hidden;
+    display: grid;
+    margin: 0 auto;
+    border: 1px solid black;
+    position: relative;
+}
+
+.pane {
+    display: block;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid white;
+}
+
+.pane.has-apple {
+    padding: 16%;
+}
+
+.apple {
+    background: #e45c52;    
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 20px;
+}
+
+.pane.body {
+    background: #00d2b5;
+}
+
+.pane.head {
+    background: #009e6c;
+}
