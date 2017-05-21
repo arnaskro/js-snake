@@ -6,8 +6,8 @@ $(function() {
     const DIRECTIONS = { UP: 0, DOWN: 1, LEFT: 2, RIGHT: 3 };
     const SCORE_POINTS = 50;
 
-    var GRID_SIZE = 4;
-    var GAME_SPEED = 600;
+    var GRID_SIZE = 15;
+    var GAME_SPEED = 125;
 
     var STATE = STATES.PAUSED;
     var DIRECTION = DIRECTIONS.UP;
