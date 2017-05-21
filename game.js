@@ -4,15 +4,23 @@ $(function() {
 
     const STATES = { ACTIVE: 1, PAUSED: 0, LOSSER: 2 };
     const DIRECTIONS = { UP: 0, DOWN: 1, LEFT: 2, RIGHT: 3 };
+    const APPLE_SCORE = 50;
 
-    var GRID_SIZE = 14;
-    var GAME_SPEED = 700;
+    var GRID_SIZE = 18;
+    var GAME_SPEED = 125;
 
     var STATE = STATES.PAUSED;
     var DIRECTION = DIRECTIONS.UP;
+
+    // POSITIONS
     var CURR = { x: 0, y: 0 };
+    var APPLE = { x: 0, y: 0 };
+
     var SCORE = 0;
 
+    var MOVE_HISTORY = [];
+
+    var MADE_MOVE = false;
 
     $.app = {
         elements: {
@@ -38,6 +46,25 @@ $(function() {
                 doc.on('click', '#startButton', function() {
                     $.app.scenes.start();
                 })
+
+                doc.on('keydown', function(e) {
+
+                    if (!MADE_MOVE) {
+                        MADE_MOVE = true;
+
+                        switch (e.which) {
+                            case 37: case 65:
+                                DIRECTION = DIRECTIONS.LEFT; break;
+                            case 38: case 87:
+                                DIRECTION = DIRECTIONS.UP; break;
+                            case 39: case 68:
+                                DIRECTION = DIRECTIONS.RIGHT; break;
+                            case 40: case 83:
+                                DIRECTION = DIRECTIONS.DOWN; break;
+                        }
+
+                    }
+                })
             }
         },
         scenes: {
@@ -50,8 +77,10 @@ $(function() {
                 $.app.drawArena();
 
 
-                $.app.addApple(2, 5);
-                $.app.setHead(8, 8);
+                $.app.addApple();
+
+                var generatedInitialPosition = $.app.generatePosition();
+                $.app.setHead(generatedInitialPosition.x, generatedInitialPosition.y);
 
                 STATE = STATES.ACTIVE;
                 $.app.loop();
@@ -88,20 +117,52 @@ $(function() {
             $('.arena').css('grid-template-columns', gridsSetting);
             $('.arena').css('grid-template-rows', gridsSetting);
         },
-        addApple: function(x, y) {
-            $('.pane.has-apple').html('');
-            $('#pane-'+x+'-'+y).addClass('has-apple');
-            $('#pane-'+x+'-'+y).html($.app.elements.apple);
+        generatePosition: function() {
+            var result = { 
+                x: Math.floor(Math.random() * GRID_SIZE) + 1, 
+                y: Math.floor(Math.random() * GRID_SIZE) + 1
+            };
+
+            return (result == CURR || result == APPLE) ? $.app.generatePosition() : result;
+        },
+        addApple: function() {
+            APPLE = $.app.generatePosition();
+
+            $('#pane-'+APPLE.x+'-'+APPLE.y).addClass('has-apple');
+            $('#pane-'+APPLE.x+'-'+APPLE.y).html($.app.elements.apple);
         },
         setHead: function(x, y) {
             CURR = { x: x, y: y};
-            console.log(CURR)
+
+            if (CURR == APPLE) $.app.eatApple();
 
             var previousHead = $('.pane.head');
-
             if (previousHead.length) previousHead.removeClass('head');
 
             $('#pane-'+x+'-'+y).addClass('head');
+
+            $.app.drawBody();
+        },
+        drawBody: function() {
+            $('.pane.body').removeClass('body');
+
+            var temp = {};
+
+            for (var i = 0; i < MOVE_HISTORY.length; i++) {
+                temp = MOVE_HISTORY[i];
+
+                $('#pane-'+temp.x+'-'+temp.y).addClass('body');
+            }
+        },
+        eatApple: function() {
+            console.log("eating")
+            SCORE += APPLE_SCORE;
+            HISTORY.push({ x: CURR.x, y: CURR.y });
+
+            $('.pane.has-apple').html('');
+            $('.pane.has-apple').removeClass('has-apple');
+
+            $.app.addApple();
         },
         loop: function () {
             if (STATE === STATES.ACTIVE) {
@@ -112,14 +173,16 @@ $(function() {
                     case DIRECTIONS.DOWN:
                         $.app.setHead(CURR.x, CURR.y + 1); break;
                     case DIRECTIONS.LEFT:
-                        $.app.setHead(CURR.x + 1, CURR.y); break;
-                    case DIRECTIONS.RIGHT:
                         $.app.setHead(CURR.x - 1, CURR.y); break;
+                    case DIRECTIONS.RIGHT:
+                        $.app.setHead(CURR.x + 1, CURR.y); break;
                 }
 
                 $.app.check();
 
-                setTimeout(function () { $.app.loop() }, 700);
+                MADE_MOVE = false;
+
+                setTimeout(function () { $.app.loop() }, GAME_SPEED);
                 
             } else if (STATE === STATES.LOSSER) {
                 $.app.scenes.losser();
