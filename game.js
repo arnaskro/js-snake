@@ -1,5 +1,6 @@
 $(function() {
+    var base = $('#app');
 
-    document.write("Hello world!");
+    base.text("Hello world!");
 
 });
