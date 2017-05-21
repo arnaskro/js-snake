@@ -142,7 +142,10 @@ $(function() {
                 y: Math.floor(Math.random() * GRID_SIZE) + 1
             };
 
-            return (result == CURR || result == APPLE || $.app.checkIfCollides(result)) ? $.app.generatePosition() : result;
+            return ((result.x == CURR.x && result.y == CURR.y) || 
+                    (result.x == APPLE.x && result.y == APPLE.y) || 
+                    ($.app.checkIfCollides(result))
+                   ) ? $.app.generatePosition() : result;
         },
         checkIfCollides: function(pos) {
             for (var i = 0; i < MOVE_HISTORY.length; i++)
