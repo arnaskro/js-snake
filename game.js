@@ -4,10 +4,9 @@ $(function() {
 
     const STATES = { ACTIVE: 1, PAUSED: 0, LOSSER: 2, WINNER: 3 };
     const DIRECTIONS = { UP: 0, DOWN: 1, LEFT: 2, RIGHT: 3 };
-    const SCORE_POINTS = 50;
 
-    var GRID_SIZE = 15;
-    var GAME_SPEED = 125;
+    var GRID_SIZE = 18;
+    var GAME_SPEED = 100;
 
     var STATE = STATES.PAUSED;
     var DIRECTION = DIRECTIONS.UP;
@@ -16,7 +15,7 @@ $(function() {
     var CURR = { x: 0, y: 0 };
     var APPLE = { x: 0, y: 0 };
 
-    var SCORE = 0;
+    var LENGTH = 1;
 
     var MOVE_HISTORY = [];
 
@@ -91,18 +90,18 @@ $(function() {
             losser: function() {
                 base.html('');
                 base.append($.app.elements.heading("YOU LOST!"));
-                base.append($.app.elements.score("Your score: " + SCORE));
+                base.append($.app.elements.score("Your final length: " + LENGTH));
                 base.append($.app.elements.startButton);
             },
             winner: function() {
                 base.html('');
                 base.append($.app.elements.heading("CONGRATULATIONS! YOU WON!"));
-                base.append($.app.elements.score("Your score: " + SCORE));
+                base.append($.app.elements.score("Your final length: " + LENGTH));
                 base.append($.app.elements.startButton);
             }
         },
         resetVars: function() {
-            SCORE = 0;
+            LENGTH = 0;
             DIRECTION = DIRECTIONS.UP;
             MOVE_HISTORY = [];
         },
@@ -189,7 +188,7 @@ $(function() {
             }
         },
         eatApple: function() {
-            SCORE += SCORE_POINTS;
+            LENGTH++;
 
             $('.pane.has-apple').html('');
             $('.pane.has-apple').removeClass('has-apple');
